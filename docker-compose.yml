@@ -1,52 +1,52 @@
-version: '3'
+version: '3.0'
 
 services:
-   db:
-     container_name: ${CONTAINER_DB_NAME}
-     image: mariadb:latest
-     deploy:
+  db:
+    container_name: ${CONTAINER_DB_NAME_-db}
+    image: mariadb:latest
+    deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints:
-         - node.labels.prod == false
-     restart: unless-stopped
-     volumes:
-        - ${DB_PATH}:/var/lib/mysql
-     environment:
-       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-       MYSQL_DATABASE: ${MYSQL_DATABASE}
-       MYSQL_USER: ${MYSQL_USER}
-       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+          - node.labels.prod == false
+    restart: unless-stopped
+    volumes:
+      - ${DB_PATH:-/var/fjorlande/lib/mysql}:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-cpRIg5ZeIjFuhtbsNTLR}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-db_wp}
+      MYSQL_USER: ${MYSQL_USER:-wordpress}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-zvo53JVHrLutaY2lRTVa}
 
-   wordpress:
-     depends_on:
-       - db
-     container_name: ${CONTAINER_WP_NAME}
-     image: wordpress:latest
-     deploy:
+  wordpress:
+    depends_on:
+      - db
+    container_name: ${CONTAINER_WP_NAME:-wordpress}
+    image: wordpress:latest
+    deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints:
-         - node.labels.prod == false
-     restart: unless-stopped
-     volumes:
-       - ${WP_CORE}:/var/www/html
-       - ${WP_CONTENT}:/var/www/html/wp-content
-       - ${WP_CONF}:/usr/local/etc/php/conf.d/php.ini
-     environment:
-       WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME}:3306
-       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
-       WORDPRESS_DB_USER: ${MYSQL_USER}
-       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
-       VIRTUAL_HOST: ${DOMAINS}
-       LETSENCRYPT_HOST: ${DOMAINS}
-       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
-     logging:
-       options:
-         max-size: ${LOGGING_OPTIONS_MAX_SIZE:-200k}
+          - node.labels.prod == false
+    restart: unless-stopped
+    volumes:
+      - ${WP_CORE:-/var/fjorlande/wordpress/www/html}:/var/www/html
+      - ${WP_CONTENT:-/var/fjorlande/wordpress/www/html/wp-content}:/var/www/html/wp-content
+      - ${WP_CONF:-/etc/fjorlande/conf.d}:/usr/local/etc/php/conf.d/php.ini
+    environment:
+      WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME:-db}:3306
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-db_wp}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-zvo53JVHrLutaY2lRTVa}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-wp_}
+      VIRTUAL_HOST: ${DOMAINS:-wordpress.dev.fjorlande.org}
+      LETSENCRYPT_HOST: ${DOMAINS:-wordpress.dev.fjorlande.org}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-it-dev@dev.fjorlande.org}
+    logging:
+      options:
+        max-size: ${LOGGING_OPTIONS_MAX_SIZE:-200k}
 
 #   wpcli:
 #     image: tatemz/wp-cli
@@ -64,6 +64,6 @@ services:
 #     entrypoint: wp
 
 networks:
-    default:
-       external:
-         name: ${NETWORK}
+  default:
+    external:
+      name: ${NETWORK:-webproxy}
